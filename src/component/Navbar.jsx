@@ -1,12 +1,19 @@
-import React, { useState, useEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes, faBars } from "@fortawesome/free-solid-svg-icons";
+import { useState, useEffect } from "react";
+import { X, Menu } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+const navItems = [
+  { label: "Accueil", href: "#accueil" },
+  { label: "Offres", href: "#offres" },
+  { label: "Avis clients", href: "#avis" },
+  { label: "FAQ", href: "#faq" },
+];
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Effet pour le scroll
+  // Détection du scroll
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 30);
@@ -16,96 +23,133 @@ function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Fermer le menu
-  const closeMenu = () => setIsMenuOpen(false);
+  // Bloquer le scroll quand le menu est ouvert
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isMenuOpen]);
 
-  const navItems = ["Accueil", "Offres", "Avis clients", "FAQ"];
+  const closeMenu = () => setIsMenuOpen(false);
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+      className={`fixed left-0 top-0 z-50 w-full transition-all duration-300 ${
         isScrolled
-          ? "bg-black/90 backdrop-blur-md py-3 shadow-lg"
+          ? "bg-black/90 py-3 shadow-lg backdrop-blur-md"
           : "bg-transparent py-5"
       }`}
     >
-      <div className="container mx-auto px-4 flex justify-between items-center">
+      <div className="container mx-auto flex items-center justify-between px-4">
         {/* Logo */}
-        <a href="/" className="text-white text-2xl font-bold">
+        <a
+          href="/"
+          className="text-2xl font-bold text-white transition-colors hover:text-[#C3D1A9]"
+        >
           BRAND
         </a>
 
         {/* Menu Desktop */}
-        <nav className="hidden md:block">
+        <nav className="hidden md:block" aria-label="Navigation principale">
           <ul className="flex items-center gap-8">
             {navItems.map((item) => (
-              <li key={item}>
+              <li key={item.label}>
                 <a
-                  href={`#${item.toLowerCase()}`}
-                  className="text-white hover:text-[#C3D1A9] font-medium transition-colors duration-300 relative group"
+                  href={item.href}
+                  className="group relative font-medium text-white transition-colors duration-300 hover:text-[#C3D1A9]"
                 >
-                  {item}
-                  <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-[#C3D1A9] group-hover:w-full transition-all duration-300"></span>
+                  {item.label}
+                  <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-[#C3D1A9] transition-all duration-300 group-hover:w-full"></span>
                 </a>
               </li>
             ))}
             <li>
-              <button className="bg-[#C3D1A9] text-black px-6 py-2 rounded-full font-medium hover:bg-[#a9b58d] transition-colors">
+              <button className="rounded-full bg-[#C3D1A9] px-6 py-2 font-medium text-black transition-all hover:bg-[#a9b58d] focus:outline-none focus:ring-2 focus:ring-[#C3D1A9] focus:ring-offset-2 focus:ring-offset-black active:scale-95">
                 Réserver un appel
               </button>
             </li>
           </ul>
         </nav>
 
-        {/* Menu Toggle Mobile */}
+        {/* Bouton Menu Mobile */}
         <button
-          className="md:hidden text-white text-2xl z-20"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="z-50 text-2xl text-white transition-colors hover:text-[#C3D1A9] md:hidden"
+          onClick={toggleMenu}
           aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+          aria-expanded={isMenuOpen}
         >
-          <FontAwesomeIcon icon={isMenuOpen ? faTimes : faBars} />
+          {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
       </div>
 
-      {/* Menu Mobile */}
-      <div
-        className={`fixed inset-0 bg-black/95 backdrop-blur-sm z-40 md:hidden transition-all duration-500 ${
-          isMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
-      >
-        {/* Bouton de fermeture dans le menu mobile */}
-        <button
-          className="absolute top-6 right-6 text-3xl text-white cursor-pointer z-50 hover:text-[#C3D1A9] hover:rotate-90 transition-all duration-300"
-          onClick={closeMenu}
-          aria-label="Fermer le menu"
-        >
-          <FontAwesomeIcon icon={faTimes} />
-        </button>
-
-        <div className="flex flex-col items-center justify-center h-full">
-          <ul className="space-y-8 text-center">
-            {navItems.map((item) => (
-              <li key={item}>
-                <a
-                  href={`#${item.toLowerCase()}`}
-                  className="text-white text-2xl font-medium hover:text-[#C3D1A9] transition-colors duration-300 block py-2"
-                  onClick={closeMenu}
-                >
-                  {item}
-                </a>
-              </li>
-            ))}
-            <li className="pt-8">
-              <button
-                className="bg-[#C3D1A9] text-black px-8 py-3 rounded-full text-lg font-medium hover:bg-[#a9b58d] transition-colors"
-                onClick={closeMenu}
-              >
-                Réserver un appel
-              </button>
-            </li>
-          </ul>
-        </div>
-      </div>
+      {/* Overlay Menu Mobile avec Framer Motion */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-40 bg-black md:hidden"
+            onClick={closeMenu}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="flex h-full flex-col items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <nav aria-label="Navigation mobile">
+                <ul className="space-y-8 text-center">
+                  {navItems.map((item, index) => (
+                    <motion.li
+                      key={item.label}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{
+                        duration: 0.3,
+                        delay: 0.2 + index * 0.1,
+                      }}
+                    >
+                      <a
+                        href={item.href}
+                        className="block py-2 text-2xl font-medium text-white transition-colors duration-300 hover:text-[#C3D1A9]"
+                        onClick={closeMenu}
+                      >
+                        {item.label}
+                      </a>
+                    </motion.li>
+                  ))}
+                  <motion.li
+                    className="pt-8"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{
+                      duration: 0.3,
+                      delay: 0.2 + navItems.length * 0.1,
+                    }}
+                  >
+                    <button
+                      className="rounded-full bg-[#C3D1A9] px-8 py-3 text-lg font-medium text-black transition-all hover:bg-[#a9b58d] focus:outline-none focus:ring-2 focus:ring-[#C3D1A9] active:scale-95"
+                      onClick={closeMenu}
+                    >
+                      Réserver un appel
+                    </button>
+                  </motion.li>
+                </ul>
+              </nav>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
